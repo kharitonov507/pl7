@@ -1,0 +1,9 @@
+{
+  "name": "player-control",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Player Control pilot: local fleet management, Go players, persistent content and proof-of-play.",
+  "engines": { "node": ">=24.0.0" },
+  "scripts": { "start": "node server.mjs", "test": "node --test tests/server.test.mjs tests/xibo-client.test.mjs", "demo:go": "node agent/start-demo.mjs" }
+}

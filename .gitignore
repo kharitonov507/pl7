@@ -1,0 +1,12 @@
+data/
+test-results/
+node_modules/
+*.log
+references/
+reference-xibo/player-data/
+reference-xibo/*.tgz
+.tools/
+agent/data/
+agent/bin/
+agent/config.local.json
+.env.local

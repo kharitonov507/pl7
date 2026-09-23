@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+<rect width="1280" height="720" fill="#f4e9d5"/><circle cx="1030" cy="330" r="280" fill="#ddb188"/><circle cx="1010" cy="340" r="200" fill="#9e6447"/>
+<path d="M825 280h250v170c0 120-250 120-250 0z" fill="#f9f1e5"/><path d="M1075 305h40c110 0 95 125-40 120" fill="none" stroke="#f9f1e5" stroke-width="35"/><ellipse cx="950" cy="280" rx="125" ry="25" fill="#62442e"/>
+<path d="M895 215q-40-40 0-80m60 80q-40-40 0-80" fill="none" stroke="#f9f1e5" stroke-width="9" stroke-linecap="round"/>
+<text x="70" y="90" font-family="Arial,sans-serif" font-size="25" letter-spacing="6" fill="#6e4936">SLOW MORNING</text>
+<text x="65" y="285" font-family="Arial,sans-serif" font-size="95" font-weight="700" fill="#392d25">Хороший день</text><text x="65" y="395" font-family="Arial,sans-serif" font-size="95" font-weight="700" fill="#392d25">начинается</text><text x="65" y="505" font-family="Arial,sans-serif" font-size="95" font-weight="700" fill="#392d25">с кофе.</text>
+<rect x="70" y="565" width="340" height="65" rx="32" fill="#392d25"/><text x="105" y="608" font-family="Arial,sans-serif" font-size="26" fill="#f4e9d5">Эспрессо + круассан</text><text x="70" y="685" font-family="Arial,sans-serif" font-size="18" fill="#6e4936">Демонстрационный материал · не реальная рекламная кампания</text>
+</svg>

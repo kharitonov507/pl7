@@ -1,0 +1,65 @@
+# Separate, local-only reference. Adapted from xibosignage/xibo-docker.
+# This does not modify the DOOH Lab application or its SQLite database.
+name: dooh-xibo-reference
+services:
+  cms-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: cms
+      MYSQL_USER: cms
+      MYSQL_PASSWORD: DoohLabLocalDbOnly2026
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    mem_limit: 1g
+  cms-xmr:
+    image: ghcr.io/xibosignage/xibo-xmr:1.3
+    ports:
+      - "127.0.0.1:9505:9505"
+    mem_limit: 256m
+  cms-web:
+    image: ghcr.io/xibosignage/xibo-cms:release-4.5.2
+    depends_on:
+      cms-db:
+        condition: service_healthy
+      cms-xmr:
+        condition: service_started
+    environment:
+      MYSQL_HOST: cms-db
+      MYSQL_DATABASE: cms
+      MYSQL_USER: cms
+      MYSQL_PASSWORD: DoohLabLocalDbOnly2026
+      XMR_HOST: cms-xmr
+      CMS_USE_MEMCACHED: "true"
+      MEMCACHED_HOST: cms-memcached
+      CMS_SERVER_NAME: localhost
+      CMS_USAGE_REPORT: "false"
+      CMS_SMTP_SERVER: "127.0.0.1:25"
+      CMS_SMTP_USERNAME: ""
+      CMS_SMTP_PASSWORD: ""
+    ports:
+      - "127.0.0.1:8088:80"
+    volumes:
+      - library:/var/www/cms/library
+      - backup:/var/www/backup
+      - custom:/var/www/cms/custom
+      - userscripts:/var/www/cms/web/userscripts
+      # White-label theme for the local CMS. Select PlayerServer in the CMS
+      # administration after recreating the cms-web container.
+      - ./theme:/var/www/cms/web/theme/custom
+    mem_limit: 1g
+  cms-memcached:
+    image: memcached:alpine
+    command: memcached -m 15
+    mem_limit: 100m
+volumes:
+  db:
+  library:
+  backup:
+  custom:
+  userscripts:

@@ -1,0 +1,10 @@
+{
+  "name": "dooh-xibo-local-reference",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node player-server.mjs" },
+  "dependencies": {
+    "@xiboplayer/proxy": "0.7.23",
+    "@xiboplayer/pwa": "0.7.23"
+  }
+}

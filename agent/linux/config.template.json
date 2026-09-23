@@ -1,0 +1,15 @@
+{
+  "deviceId": "go-screen-01",
+  "cms": "https://cms.example.invalid",
+  "listen": "127.0.0.1:8791",
+  "dataDir": "/home/dooh/.local/share/dooh/go-screen-01",
+  "cacheBytes": 536870912,
+  "pollSeconds": 2,
+  "rendererTimeoutSeconds": 30,
+  "chromium": "/usr/bin/chromium",
+  "chromiumArgs": [],
+  "mqttBroker": "",
+  "mqttTopic": "dooh/lab/go-screen-01",
+  "mqttCA": "",
+  "otaPublicKey": ""
+}

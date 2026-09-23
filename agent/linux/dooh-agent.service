@@ -1,0 +1,25 @@
+# User service: Chromium inherits the real desktop session; do not run the kiosk as root.
+# Copy to ~/.config/systemd/user/ only after reviewing agent/README.md.
+[Unit]
+Description=DOOH native Go agent and owned Chromium kiosk
+After=graphical-session.target network-online.target
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+[Service]
+Type=notify
+NotifyAccess=main
+WorkingDirectory=/opt/dooh/bin
+ExecStart=/opt/dooh/bin/dooh-agent -config %h/.config/dooh/agent.json
+EnvironmentFile=-%h/.config/dooh/agent.env
+Restart=on-failure
+RestartSec=5
+WatchdogSec=30
+TimeoutStopSec=20
+KillMode=control-group
+UMask=0077
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical-session.target

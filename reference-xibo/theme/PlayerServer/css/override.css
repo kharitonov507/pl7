@@ -1,0 +1,67 @@
+/* Player Server white-label theme for the local Xibo reference CMS.
+ *
+ * This file is intentionally an override layer: the upstream CMS remains
+ * upgradeable and the theme is selected from Administration → Settings →
+ * Configuration. The selectors cover the 4.5.x navigation shell; unknown
+ * upstream widgets keep their normal styling.
+ */
+:root {
+  --player-server-accent: #7659dc;
+  --player-server-accent-dark: #6046be;
+}
+
+/* Make the application shell use the Player Server palette. */
+.sidebar,
+.navbar-sidebar,
+.main-sidebar {
+  background: var(--player-server-accent) !important;
+}
+
+.sidebar a:hover,
+.sidebar .active > a,
+.navbar-sidebar a:hover {
+  background: var(--player-server-accent-dark) !important;
+}
+
+.btn-primary,
+.btn-info,
+.bg-primary {
+  background-color: var(--player-server-accent) !important;
+  border-color: var(--player-server-accent) !important;
+}
+
+.btn-primary:hover,
+.btn-info:hover {
+  background-color: var(--player-server-accent-dark) !important;
+  border-color: var(--player-server-accent-dark) !important;
+}
+
+/* Replace the visible product wordmark without touching source/API names. */
+.navbar-brand,
+.brand-link,
+.sidebar-brand {
+  font-size: 0 !important;
+  white-space: nowrap;
+}
+
+.navbar-brand::after,
+.brand-link::after,
+.sidebar-brand::after {
+  content: "Player Server";
+  display: inline-block;
+  color: #fff;
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  vertical-align: middle;
+}
+
+/* Hide the upstream text/image mark when it is rendered beside the brand. */
+.navbar-brand img,
+.brand-link img,
+.sidebar-brand img,
+.navbar-brand svg,
+.brand-link svg,
+.sidebar-brand svg {
+  display: none !important;
+}
