@@ -10,3 +10,5 @@ agent/data/
 agent/bin/
 agent/config.local.json
 .env.local
+tmp/
+output/

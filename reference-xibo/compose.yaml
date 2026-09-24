@@ -49,9 +49,15 @@ services:
       - backup:/var/www/backup
       - custom:/var/www/cms/custom
       - userscripts:/var/www/cms/web/userscripts
-      # White-label theme for the local CMS. Select PlayerServer in the CMS
-      # administration after recreating the cms-web container.
-      - ./theme:/var/www/cms/web/theme/custom
+      # Native CMS brand assets; persistent and read-only across recreation.
+      - ./brand/config.json:/var/www/cms/library/brand/config.json:ro
+      - ./brand/theme.css:/var/www/cms/library/brand/theme.css:ro
+      - ./brand/logo.svg:/var/www/cms/library/brand/logo.svg:ro
+      - ./brand/logo-dark.svg:/var/www/cms/library/brand/logo-dark.svg:ro
+      - ./brand/logo-icon.svg:/var/www/cms/library/brand/logo-icon.svg:ro
+      - ./brand/favicon.ico:/var/www/cms/library/brand/favicon.ico:ro
+      - ./brand/192x192.png:/var/www/cms/library/brand/192x192.png:ro
+      - ./brand/512x512.png:/var/www/cms/library/brand/512x512.png:ro
     mem_limit: 1g
   cms-memcached:
     image: memcached:alpine

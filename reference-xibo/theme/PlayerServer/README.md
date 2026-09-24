@@ -1,5 +1,9 @@
 # PlayerServer white-label theme
 
+**Superseded:** the installed CMS uses `library/brand`, not this legacy
+scaffold. See `../../brand/README.md` and the current Compose bind mounts.
+The instructions below are historical and must not be used for this demo.
+
 This is a local theme override scaffold for the Xibo CMS reference container.
 It does not rename API routes, image names, PHP namespaces, or the upstream
 source; it only supplies the operator-facing **Player Server** styling layer.

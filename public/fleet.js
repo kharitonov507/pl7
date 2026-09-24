@@ -1,7 +1,10 @@
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 let page = 1; let pages = 1; let toastTimer;
-const demo = params.get('mode') === 'real' ? 0 : Math.max(1, Math.min(500, Number(params.get('demo')) || 100));
+const demo = params.get('mode') === 'demo' ? Math.max(1, Math.min(500, Number(params.get('demo')) || 100)) : 0;
+$('demo-toggle').href = demo ? '/fleet.html' : '/fleet.html?mode=demo';
+$('demo-toggle').textContent = demo ? 'Реальные Go-агенты' : 'Отдельный режим симуляции';
+$('fleet-provider').value = params.get('provider') || (demo ? '' : 'native');
 $('fleet-search').value = params.get('q') || '';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const sourceNames = { native: 'Go-agent', browser: 'Browser', xibo: 'Player Server', simulation: 'Go Agent · Demo' };
@@ -44,11 +47,12 @@ async function loadStatus() {
   $('xibo-media').textContent = status.catalogCounts?.media || 0; $('xibo-layout').textContent = status.catalogCounts?.layout || 0;
   $('xibo-campaign').textContent = status.catalogCounts?.campaign || 0; $('xibo-schedule').textContent = status.catalogCounts?.schedule || 0;
   if (demo) { $('mode-alert').hidden = false; $('mode-alert').textContent = `Единый парк содержит реальные локальные устройства и дополнен демонстрационными до ${demo} экранов. Все они находятся на одной странице; команды для демо-записей не отправляются.`; $('demo-toggle').textContent = 'Только реальные устройства'; $('demo-toggle').href = '/fleet.html?mode=real'; }
-  else if (!status.configured) { $('mode-alert').hidden = false; $('mode-alert').textContent = 'Player Server пока не подключён. Сейчас показаны локальные устройства.'; $('demo-toggle').textContent = 'Показать парк 100 экранов'; $('demo-toggle').href = '/fleet.html'; }
+  else if (!status.configured) { $('mode-alert').hidden = false; $('mode-alert').textContent = 'Player Server пока не подключён. Сейчас показаны локальные устройства.'; $('demo-toggle').textContent = 'Показать парк 100 экранов'; $('demo-toggle').href = '/fleet.html?mode=demo'; }
   else if (status.lastError) { $('mode-alert').hidden = false; $('mode-alert').classList.add('error'); $('mode-alert').textContent = `Последняя синхронизация Player Server завершилась ошибкой: ${String(status.lastError).replaceAll('Xibo', 'Player Server')}`; }
 }
 async function loadFleet() {
   const query = new URLSearchParams({ page, pageSize: 100, q: $('fleet-search').value, status: $('fleet-status').value, provider: $('fleet-provider').value });
+  if (!demo && $('fleet-provider').value === 'native') query.set('scope', 'go100');
   if (demo) { query.set('demo', demo); query.set('includeReal', '1'); }
   const response = await fetch(`/api/fleet?${query}`, { cache: 'no-store' }); if (!response.ok) throw new Error('Реестр недоступен');
   const data = await response.json(); page = data.page; pages = data.pages;
@@ -90,3 +94,6 @@ $('sync-xibo').addEventListener('click', async () => { const button = $('sync-xi
 setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); }, 1000);
 try { await loadStatus(); await loadFleet(); $('server-dot').className = 'dot'; $('server-status').textContent = 'Локальный сервер · online'; } catch (error) { $('server-dot').className = 'dot bad'; $('server-status').textContent = 'Сервер недоступен'; toast(error.message, true); }
 if (params.get('device') && params.get('provider')) { try { await openConfig(params.get('provider'), params.get('device')); } catch (error) { toast(error.message, true); } }
+
+let polling = false;
+setInterval(async () => { if (polling) return; polling = true; try { await loadFleet(); $('server-status').textContent = 'Локальный сервер · online'; } catch { $('server-status').textContent = 'Сервер недоступен · данные устарели'; } finally { polling = false; } }, 2000);

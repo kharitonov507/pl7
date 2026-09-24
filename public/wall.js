@@ -22,7 +22,7 @@ function render() {
 }
 async function refresh(){
   if(busy)return;busy=true;
-  try{const [a,b]=await Promise.all([fetch('/api/fleet?demo=100&includeReal=1&pageSize=100'),fetch('/api/state')]);if(!a.ok||!b.ok)throw Error('Сервер недоступен');const data=await a.json();state=await b.json();fleet=data.items;
+  try{const [a,b]=await Promise.all([fetch('/api/fleet?scope=go100&pageSize=100'),fetch('/api/state')]);if(!a.ok||!b.ok)throw Error('Сервер недоступен');const data=await a.json();state=await b.json();fleet=data.items;
     $('summary').textContent=`${fleet.length} дисплеев · ${fleet.length} Go-agent endpoints · Player Server`;
     $('wall').innerHTML=fleet.map((d,i)=>`<button class="tile" data-key="${esc(d.provider+':'+d.externalId)}" aria-label="Экран ${i+1}: ${esc(d.name)}"><div class="picture"></div><footer><span>${String(i+1).padStart(3,'0')} · ${esc(d.name)}</span><span class="${esc(d.status)}">●</span></footer><small>${esc(labels[d.provider])} · ${esc(statuses[d.status])}</small></button>`).join('');render();
   }catch(e){$('summary').textContent=e.message;}finally{busy=false;}
@@ -35,4 +35,4 @@ $('wall').onclick=event=>{const tile=event.target.closest('[data-key]');if(!tile
 $('close').onclick=()=>$('details').close();$('details').addEventListener('close',()=>$('preview').replaceChildren());
 $('commands').onclick=async event=>{const button=event.target.closest('[data-command]');if(!button)return;button.disabled=true;try{const r=await fetch(`/api/devices/${encodeURIComponent(selected.externalId)}/command`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:button.dataset.command})});if(!r.ok)throw Error((await r.json()).error);$('command-result').textContent='Команда поставлена в очередь плеера.';}catch(e){$('command-result').textContent=e.message;}finally{button.disabled=false;}};
 $('fullscreen').onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
-await refresh();setInterval(render,1000);setInterval(refresh,10000);
+await refresh();setInterval(render,1000);setInterval(refresh,2000);

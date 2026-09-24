@@ -1,0 +1,8 @@
+/* Visual overrides for the CMS native brand stylesheet. */
+img[alt="Player Server"][src="/brand/logo.svg"] {
+  width: 145px !important;
+  height: 54px !important;
+  max-width: 100%;
+}
+/* The disabled news feed otherwise leaves a large empty card and NaN date. */
+div.border:has(> div > svg.lucide-newspaper) { display: none; }

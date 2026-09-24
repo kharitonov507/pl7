@@ -20,7 +20,7 @@ try {
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto(base);
+  await page.goto(base + '/?agents=browser');
   await page.waitForFunction(() => document.getElementById('online-count').textContent === '3');
   const player = id => page.frames().find(frame => frame.url().includes(`device=${id}`));
   await page.waitForTimeout(1500);

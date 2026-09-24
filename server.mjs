@@ -114,8 +114,9 @@ export function createApp({ dataDir = process.env.DOOH_DATA_DIR || path.join(roo
     playlists: listPlaylists().filter(p => p.id === d.playlist_id || p.id === d.fallback_id),
     assets: db.prepare('SELECT * FROM assets').all(), command: { seq: d.command_seq, action: d.command }
   });
+  const deviceStatus = d => (!d.simulated_offline && d.last_seen && Date.now() - Date.parse(d.last_seen) < 10000) ? (JSON.parse(d.state || '{}').error ? 'error' : 'online') : 'offline';
   const snapshot = (goOnly = false) => ({
-    devices: db.prepare(`SELECT * FROM devices ${goOnly ? 'WHERE renderer_url IS NOT NULL' : ''} ORDER BY id ${goOnly ? 'LIMIT 100' : ''}`).all().map(d => ({ ...d, state: JSON.parse(d.state), online: !d.simulated_offline && !!d.last_seen && Date.now() - Date.parse(d.last_seen) < 10000 })),
+    devices: db.prepare(`SELECT * FROM devices ${goOnly ? 'WHERE renderer_url IS NOT NULL' : ''} ORDER BY id ${goOnly ? 'LIMIT 100' : ''}`).all().map(d => ({ ...d, state: JSON.parse(d.state), status: deviceStatus(d), online: deviceStatus(d) === 'online' })),
     assets: db.prepare('SELECT * FROM assets').all(), playlists: listPlaylists(),
     events: db.prepare(`SELECT e.*, a.name AS asset_name, d.name AS device_name FROM events e JOIN assets a ON a.id=e.asset_id JOIN devices d ON d.id=e.device_id ${goOnly ? 'WHERE d.renderer_url IS NOT NULL' : ''} ORDER BY e.rowid DESC LIMIT 80`).all(),
     stats: db.prepare(`SELECT count(*) AS total, sum(CASE WHEN kind='completed' THEN 1 ELSE 0 END) AS completed, sum(CASE WHEN kind='failed' THEN 1 ELSE 0 END) AS failed FROM events ${goOnly ? 'WHERE device_id IN (SELECT id FROM devices WHERE renderer_url IS NOT NULL)' : ''}`).get(),
@@ -135,7 +136,7 @@ export function createApp({ dataDir = process.env.DOOH_DATA_DIR || path.join(roo
       const state = JSON.parse(d.state || '{}');
       return {
         provider: d.renderer_url ? 'native' : 'browser', externalId: d.id, name: d.name, location: d.location,
-        status: state.error ? 'error' : (!d.simulated_offline && d.last_seen && Date.now() - Date.parse(d.last_seen) < 10000 ? 'online' : 'offline'),
+        status: deviceStatus(d),
         authorized: true, lastSeen: d.last_seen, currentContent: state.assetName || playlistName(d.playlist_id), syncedAt: d.last_seen,
         playlistId: d.playlist_id, fallbackId: d.fallback_id, startsAt: d.starts_at, endsAt: d.ends_at, version: d.version, configurable: true, simulated: false
       };
@@ -250,6 +251,7 @@ export function createApp({ dataDir = process.env.DOOH_DATA_DIR || path.join(roo
         const pageSize = Math.max(10, Math.min(100, Number(url.searchParams.get('pageSize')) || 25));
         const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
         let rows = fleetRows({ demo, includeReal: url.searchParams.get('includeReal') === '1' });
+        if (url.searchParams.get('scope') === 'go100') rows = rows.filter(d => d.provider === 'native' && /^go-agent-(?:0[0-9]{2}|100)$/.test(d.externalId));
         if (q) rows = rows.filter(d => `${d.name} ${d.externalId} ${d.location}`.toLocaleLowerCase('ru-RU').includes(q));
         if (['online', 'offline', 'error'].includes(status)) rows = rows.filter(d => d.status === status);
         if (provider) rows = rows.filter(d => d.provider === provider);

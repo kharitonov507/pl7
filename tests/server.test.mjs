@@ -91,6 +91,22 @@ test('fleet endpoint paginates 100 simulated screens and mixes in real players',
   assert.equal(unified.items.some(item => item.provider === 'simulation'), true);
 });
 
+test('real Go fleet excludes synthetic, browser and legacy rows and expires stale errors', async () => {
+  await post('/api/devices/register', {deviceId:'go-agent-100',name:'Acceptance agent',playlistId:'morning',rendererUrl:'http://127.0.0.1:8990/'});
+  const fleet = async () => (await (await fetch(base+'/api/fleet?scope=go100&pageSize=100')).json());
+  let f=await fleet(); assert.equal(f.summary.total,1); assert.equal(f.summary.demo,0); assert.equal(f.summary.offline,1);
+  await post('/api/devices/go-agent-100/heartbeat',{});
+  f=await fleet(); assert.equal(f.summary.online,1); assert.equal(f.items[0].status,'online');
+  await post('/api/devices/go-agent-100/heartbeat',{error:'Renderer failure'});
+  f=await fleet(); assert.equal(f.summary.error,1); assert.equal(f.summary.online,0);
+  app.db.prepare('UPDATE devices SET last_seen=? WHERE id=?').run(new Date(Date.now()-11000).toISOString(),'go-agent-100');
+  f=await fleet(); assert.equal(f.summary.offline,1); assert.equal(f.summary.error,0);
+  await post('/api/devices/go-agent-100/heartbeat',{});
+  f=await fleet(); assert.equal(f.summary.online,1);
+  const state=await (await fetch(base+'/api/state?agents=go')).json();
+  assert.equal(state.devices.find(d=>d.id==='go-agent-100').status,f.items[0].status);
+});
+
 test('every fleet screen has persistent individual configuration', async () => {
   const beforeResponse = await fetch(base + '/api/fleet/simulation/sim-100/config');
   assert.equal(beforeResponse.status, 200);

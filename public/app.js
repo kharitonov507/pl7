@@ -3,7 +3,7 @@ const names = { screens: 'Живые плееры', content: 'Медиатека
 const kinds = { started: 'Начало', completed: 'Завершён', interrupted: 'Прерван', failed: 'Ошибка' };
 const local = new Map();
 let state, currentView = 'screens', toastTimer;
-const goMode = new URL(location.href).searchParams.get('agents') === 'go';
+const goMode = new URL(location.href).searchParams.get('agents') !== 'browser';
 if (goMode) {
   document.querySelector('#view-about').innerHTML = document.querySelector('#view-about').innerHTML.replaceAll('Player CMS', 'Player Server');
   document.querySelector('.sidebar-bottom p').textContent = 'Prototype 0.2 · Player Server + 100 Go-agent endpoints · SQLite';
@@ -12,7 +12,7 @@ if (goMode) {
   document.querySelector('.nav-item[data-view="screens"] .nav-count').textContent = '100';
   document.querySelector('.nav-item[aria-label="Все 100 экранов"] span:not(.nav-count)').textContent = 'Все дисплеи';
   document.querySelector('#online-count').nextElementSibling.textContent = '/ 100 Go-agent endpoints';
-  document.querySelector('#view-screens .section-heading h2').textContent = 'Go-agent endpoints · 100 дисплеев';
+  document.querySelector('#view-screens .section-heading h2').textContent = 'Живой предпросмотр · первые 3 Go-агента';
   document.querySelector('.note-panel p').textContent = 'Файлы — в кеше на диске. Расписание, команды и очередь событий — в SQLite каждого Go-агента. Браузер не хранит их в IndexedDB.';
   document.querySelector('#view-screens .footnote').textContent = '100 Go-процессов на одном ПК · локальный HTTP/WebSocket-мост · Astra и аппаратный watchdog ещё не проверены';
   document.querySelector('#view-events .subtitle').textContent = 'События Go-агентов и рендера. Очередь сохраняется в SQLite на устройстве.';
@@ -28,7 +28,7 @@ if (goMode) {
   guide.querySelector('p').textContent = 'На одном компьютере запускается 100 независимых Go-процессов. Это демонстрация масштаба реестра и протокола, а не 100 физических экранов.';
   document.querySelector('.brand').href = '/?agents=go';
   document.querySelector('#view-events a[download]').href = '/api/report?agents=go';
-  document.querySelector('#view-screens .section-heading h2').textContent = 'Go-agent endpoints · 100 дисплеев';
+  document.querySelector('#view-screens .section-heading h2').textContent = 'Живой предпросмотр · первые 3 Go-агента';
   const architecture = document.querySelector('#view-about .architecture');
   architecture.lastElementChild.querySelector('h2').textContent = 'Go + SQLite + Chromium';
   architecture.lastElementChild.querySelector('p').textContent = 'Сто отдельных Go-процессов. Каждый сохраняет расписание, команды и очередь PoP в собственной SQLite WAL. Медиа — в файловом кеше по SHA-256. Локальный HTTP/WebSocket-мост передаёт состояние тонкому браузерному рендеру.';
@@ -63,7 +63,7 @@ document.querySelectorAll('[data-view]').forEach(button => button.addEventListen
 $('guide-toggle').addEventListener('click', () => { $('guide').hidden = !$('guide').hidden; });
 document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => $(button.dataset.close).close()));
 function makeScreens() {
-  $('screens').innerHTML = state.devices.map(d => `<article class="screen-card" id="card-${esc(d.id)}">
+  $('screens').innerHTML = state.devices.slice(0, goMode ? 3 : state.devices.length).map(d => `<article class="screen-card" id="card-${esc(d.id)}">
     <div class="screen-head"><div><h3>${esc(d.name)}</h3><p>${esc(d.location)}</p></div><span class="badge waiting" data-status>Запуск</span></div>
     <div class="monitor"><iframe src="${esc(d.renderer_url || `/player.html?device=${d.id}`)}" title="${esc(d.name)} — ${d.renderer_url ? 'Go-agent' : 'виртуальный плеер'}" allow="autoplay; fullscreen"></iframe></div><div class="monitor-stand"></div><div class="monitor-base"></div>
     <div class="screen-info"><div class="screen-info-row"><span>Сейчас на экране</span><strong data-timing>—</strong></div><div class="screen-title" data-content>Подготовка кеша…</div><div class="playback-track"><div data-progress></div></div><div class="screen-info-row"><span>Плейлист</span><strong data-playlist>—</strong></div><div class="screen-info-row"><span>Кеш / очередь</span><strong data-cache>—</strong></div></div>
@@ -91,14 +91,13 @@ function renderDevice(d) {
 }
 function renderStats() {
   if (!state) return;
-  let count = 0; let queue = 0;
+  let queue = 0;
   for (const d of state.devices) {
     const record = local.get(d.id); const fresh = record && Date.now() - record.at < 4000;
     const s = fresh ? record.state : d.state;
-    if (fresh ? s.online : d.online) count++;
     queue += s.queue || 0;
   }
-  $('online-count').textContent = count;
+  // Connection counters are updated together by loadFleetWall, from one server snapshot.
   $('queue-count').textContent = queue;
   $('completed-count').textContent = state.stats.completed || 0;
   $('asset-count').textContent = state.assets.length;
@@ -237,14 +236,18 @@ async function refresh() {
 }
 async function loadFleetWall() {
   try {
-    const response = await fetch('/api/fleet?demo=100&includeReal=1&pageSize=100', { cache: 'no-store', signal: AbortSignal.timeout(4000) });
+    const response = await fetch(`/api/fleet?pageSize=100${goMode ? '&scope=go100' : '&provider=browser'}`, { cache: 'no-store', signal: AbortSignal.timeout(4000) });
     if (!response.ok) throw new Error('Парк экранов недоступен');
     const fleet = await response.json();
+    $('online-count').textContent = fleet.summary.online;
+    $('online-count').nextElementSibling.textContent = `/ ${fleet.summary.total} зарегистрированных агентов`;
+    $('fleet-overview-title').textContent = `${fleet.summary.total} экранов`;
     $('wall-online').textContent = fleet.summary.online;
     $('wall-offline').textContent = fleet.summary.offline;
     $('wall-error').textContent = fleet.summary.error;
     $('fleet-wall').innerHTML = fleet.items.map((device, index) => `<a class="fleet-node ${esc(device.status)}" href="/fleet.html?provider=${encodeURIComponent(device.provider)}&device=${encodeURIComponent(device.externalId)}" title="${esc(device.name)} · ${esc(device.location)} · ${esc(device.status)}" aria-label="${esc(device.name)}, ${esc(device.status)}">${String(index + 1).padStart(3, '0')}</a>`).join('');
   } catch (error) {
+    for (const id of ['online-count', 'wall-online', 'wall-offline', 'wall-error']) $(id).textContent = '—';
     $('fleet-wall').innerHTML = `<div class="empty">${esc(error.message)}</div>`;
   }
 }
@@ -252,4 +255,5 @@ setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString('ru-R
 await Promise.all([refresh(), loadFleetWall()]);
 let refreshing = false;
 setInterval(async () => { if (refreshing) return; refreshing = true; try { await refresh(); } finally { refreshing = false; } }, 2000);
-setInterval(loadFleetWall, 10000);
+let fleetLoading = false;
+setInterval(async () => { if (fleetLoading) return; fleetLoading = true; try { await loadFleetWall(); } finally { fleetLoading = false; } }, 2000);
