@@ -12,3 +12,5 @@ agent/config.local.json
 .env.local
 tmp/
 output/
+work/
+.codex/

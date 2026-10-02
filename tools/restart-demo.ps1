@@ -31,6 +31,11 @@ if (!$SkipDocker) {
     if (!$cmsReady) { throw 'CMS login did not become ready; inspect docker compose logs cms-web' }
 }
 $nodePath = (Get-Command node).Source
+# The reference browser uses the wrapper's same-origin XMDS proxy only on localhost.
+if (!(Get-NetTCPConnection -LocalPort 8789 -State Listen -ErrorAction SilentlyContinue)) {
+    Start-Process -FilePath $nodePath -ArgumentList 'reference-xibo/player-server.mjs' -WorkingDirectory $demoRoot -WindowStyle Hidden -RedirectStandardOutput "$demoLog/reference.out.log" -RedirectStandardError "$demoLog/reference.err.log" | Out-Null
+}
+Write-Host 'Reference playback: keep http://localhost:8789/player/ open in a browser.'
 $serverProcess = Start-Process -FilePath $nodePath -ArgumentList '--env-file-if-exists=.env.local server.mjs' -WorkingDirectory $demoRoot -WindowStyle Hidden -RedirectStandardOutput "$demoLog/server.out.log" -RedirectStandardError "$demoLog/server.err.log" -PassThru
 $ready = $false
 for ($i=0; $i -lt 30; $i++) {
